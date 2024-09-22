@@ -44,7 +44,8 @@ train_dataloader = DataLoader(dataset=train_dataset,
 dim_z = 10
 num_classes = len(train_dataset.classes)
 channels_images = train_dataset[0][0].shape[0]
-lr = 0.002
+disc_lr = 0.0001
+gen_lr = 0.001
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 #model definition
@@ -52,8 +53,8 @@ gen = Generator(input_channels=dim_z+num_classes,output_channels=train_dataset[0
 disc = Discriminator(input_channels=channels_images+num_classes,output_channels=train_dataset[0][0].shape[0]).to(device)
 
 #optimizer definition
-gen_optimizer = torch.optim.Adam(gen.parameters(), lr=lr)
-disc_optimizer = torch.optim.Adam(disc.parameters(), lr=lr)
+gen_optimizer = torch.optim.Adam(gen.parameters(), lr=gen_lr)
+disc_optimizer = torch.optim.Adam(disc.parameters(), lr=disc_lr)
 
 #loss function definition
 criterion = nn.BCEWithLogitsLoss()
@@ -107,8 +108,10 @@ for epoch in range(epochs):
         
         ### UPDATE GENERATOR ###
         #do the forward pass
+        gen_sample_fake = combine_vectors(fake, one_hot_encoding_image)
+        fake_prediction = disc(gen_sample_fake)
         #calculate the loss
-        loss_gen = criterion(fake,torch.ones_like(fake))
+        loss_gen = criterion(fake_prediction,torch.ones_like(fake_prediction))
         ######################################################################
         ### SAVE LOSS FOR PLOT ###
         temp_gen_losses.append(loss_gen.detach().to('cpu').numpy().item())
@@ -137,6 +140,10 @@ for epoch in range(epochs):
         
         show_tensor_images(fake)
         show_tensor_images(real)
+        
+#%%
+
+show_tensor_images(fake)
             
             
             
